@@ -46,6 +46,8 @@ shallow_clone: true
 
 
 environment:
+  DATALAD_TESTS_SSH: 1
+
   # Do not use `image` as a matrix dimension, to have fine-grained control over
   # what tests run on which platform
   # The ID variable had no impact, but sorts first in the CI run overview
@@ -61,7 +63,7 @@ environment:
     - ID: Ubu20
       DTS: datalad_hirni
       APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      INSTALL_SYSPKGS: python3-virtualenv
+      INSTALL_SYSPKGS: python3-virtualenv singularity-container
       # system git-annex is way too old, use better one
       INSTALL_GITANNEX: git-annex -m deb-url --url http://ftp.us.debian.org/debian/pool/main/g/git-annex/git-annex_8.20201127-1_amd64.deb
     # Windows core tests
@@ -131,6 +133,11 @@ install:
   - sh: "[ \"x$PY\" != x ] && . ${HOME}/venv${PY}/bin/activate || virtualenv -p 3 ${HOME}/dlvenv && . ${HOME}/dlvenv/bin/activate; ln -s \"$VIRTUAL_ENV\" \"${HOME}/VENV\""
   - cmd: "set PATH=C:\\Python%PY%;C:\\Python%PY%\\Scripts;%PATH%"
   # Missing system software
+  # add Neurodebian repository on Ubuntu for singularity:
+  - sh: "[ \"x${APPVEYOR_BUILD_WORKER_IMAGE}\" = \"xUbuntu2004\" ] && sudo wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list || true"
+  - sh: "[ \"x${APPVEYOR_BUILD_WORKER_IMAGE}\" = \"xUbuntu2004\" ] && sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 || true"
+  - sh: "[ \"x${APPVEYOR_BUILD_WORKER_IMAGE}\" = \"xUbuntu2004\" ] && sudo apt update || true"
+
   - sh: "[ -n \"$INSTALL_SYSPKGS\" ] && ( [ \"x${APPVEYOR_BUILD_WORKER_IMAGE}\" = \"xmacOS\" ] && brew install -q ${INSTALL_SYSPKGS} || sudo apt-get install --no-install-recommends -y ${INSTALL_SYSPKGS} ) || true"
   # Install git-annex on windows, otherwise INSTALL_SYSPKGS can be used
   # deploy git-annex, if desired
